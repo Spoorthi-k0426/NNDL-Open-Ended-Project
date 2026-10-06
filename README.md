@@ -1,108 +1,86 @@
-# Pneumonia Detection from Chest X-Ray
+# Pneumonia Detection from Chest X-Rays
 
-A clean, beginner-friendly web application built with **Streamlit** and **TensorFlow / Keras** for detecting pneumonia from chest X-ray images using a fine-tuned **ResNet50V2** deep learning model.
+An interactive web tool built with Streamlit and TensorFlow/Keras to screen chest radiographs for pneumonia using a fine-tuned ResNet50V2 model.
 
----
+### What this project does
 
-## 📌 Project Overview
+Automating preliminary chest X-ray screening can help flag potential lung infections faster, especially in high-volume or resource-constrained settings. This tool lets you drop in an anterior-posterior (AP) or postero-anterior (PA) chest scan and get an immediate classification:
 
-This project classifies chest X-ray images into two categories:
-- **NORMAL**: Healthy lungs
-- **PNEUMONIA**: Evidence of pneumonia infection
+* **NORMAL**: Clear lung fields without signs of acute infection.
+* **PNEUMONIA**: Evidence of focal consolidation or diffuse infiltrates.
 
-### Model & Decision Logic
-- **Architecture**: Fine-tuned **ResNet50V2** transfer learning model
-- **Input Dimensions**: `224 × 224` pixels (RGB, 3 channels)
-- **Output**: Sigmoid activation yielding a pneumonia probability between `0.0` and `1.0`
-- **Optimal Decision Threshold (`OPTIMAL_THRESHOLD`)**: `0.20` (selected via validation F1-score optimization in the training notebook)
-- **Classification Rule**:
-  $$\text{Predicted Class} = \begin{cases} \text{PNEUMONIA} & \text{if } P(\text{Pneumonia}) \ge 0.20 \\ \text{NORMAL} & \text{if } P(\text{Pneumonia}) < 0.20 \end{cases}$$
-- **Confidence Metric**:
-  $$\text{Confidence} = \begin{cases} P(\text{Pneumonia}) & \text{if PNEUMONIA} \\ 1 - P(\text{Pneumonia}) & \text{if NORMAL} \end{cases}$$
 
----
+### How the model works
 
-## 🛠️ Technologies Used
+* **Backbone**: A pre-trained ResNet50V2 feature extractor fine-tuned on paediatric chest X-ray scans.
+* **Input**: Images are loaded, converted to RGB, and resized to $224 \times 224$ pixels.
+* **Output**: A single sigmoid neuron predicting the probability of pneumonia ($0.0$ to $1.0$).
+* **Why the decision threshold is set to `0.20**`:
+In clinical screening, a **false negative** (missing an infected patient) is far more dangerous than a false positive (flagging a healthy scan for physician review). By tuning the decision boundary on validation F1-scores, a cutoff of **0.20** gave the most dependable sensitivity without flooding the pipeline with false alarms:
+* **Pneumonia**: $P(\text{Pneumonia}) \ge 0.20$
+* **Normal**: $P(\text{Pneumonia}) < 0.20$
 
-- **Python 3.10+**
-- **TensorFlow / Keras**: Deep learning model loading & inference
-- **Streamlit**: Interactive web user interface
-- **NumPy (< 2.0)**: Matrix & array computations compatible with TensorFlow
-- **Pillow (PIL)**: Image loading and resizing
+### Tech stack
 
----
+* **Python 3.10+**
+* **TensorFlow / Keras** for model loading and forward passes
+* **Streamlit** for the frontend interface
+* **Pillow (PIL)** for image ingestion and resizing
+* **NumPy (< 2.0)** to maintain compatibility with TensorFlow C-extensions
 
-## 📂 Project Structure
+### Repository layout
 
-```text
 open_ended/
 │
-├── NNDL_Pneumonia_Prediction.ipynb   # Model training & evaluation notebook
-├── pneumonia_resnet50v2_final.keras  # Saved ResNet50V2 trained model
-├── app.py                            # Streamlit web application
-├── requirements.txt                  # Python dependencies
-└── README.md                         # Project documentation
-```
+├── NNDL_Pneumonia_Prediction.ipynb   # Full training, ablation, and evaluation notebook
+├── pneumonia_resnet50v2_final.keras  # Exported ResNet50V2 model checkpoint
+├── app.py                            # Streamlit frontend and inference handler
+├── requirements.txt                  # Python runtime dependencies
+└── README.md                         # Documentation
 
----
 
-## 🚀 Getting Started
+### Setting up locally
 
-### 1. Install Dependencies
+#### 1. Install dependencies
 
-Open your terminal in the project directory and install the required packages:
+Clone or download this repo, open a terminal inside the project directory, and install the environment:
 
-```bash
+
 pip install -r requirements.txt
-```
 
-> **Note**: TensorFlow and Scikit-Learn require NumPy 1.x (`numpy<2.0.0`). The `requirements.txt` file has already configured this constraint.
+*(Note: TensorFlow builds require NumPy `1.x`. Keeping `numpy<2.0.0` prevents binary ABI incompatibilities.)*
 
-### 2. Export / Place the Model File
+#### 2. Model checkpoint
 
-The web application expects the trained model file:
-```text
-pneumonia_resnet50v2_final.keras
-```
-to be placed directly in the project folder beside `app.py`.
+The web app looks for `pneumonia_resnet50v2_final.keras` in the root folder alongside `app.py`.
 
-#### If you trained the model in Google Colab:
-1. Run **Cell 25** of `NNDL_Pneumonia_Prediction.ipynb`:
-   ```python
-   FINAL_MODEL_PATH = "pneumonia_resnet50v2_final.keras"
-   resnet_model.save(FINAL_MODEL_PATH)
-   ```
-2. Download the model file to your computer using:
-   ```python
-   from google.colab import files
-   files.download("pneumonia_resnet50v2_final.keras")
-   ```
-3. Move the downloaded `pneumonia_resnet50v2_final.keras` into this project directory.
+* **If you trained via Google Colab**:
+Save and download your model from your notebook:
 
-#### If you trained the model locally:
-Execute Cell 25 in your local Jupyter Notebook so `pneumonia_resnet50v2_final.keras` is saved directly into the folder.
+resnet_model.save("pneumonia_resnet50v2_final.keras")
+from google.colab import files
+files.download("pneumonia_resnet50v2_final.keras")
 
----
 
-## ▶️ Running the Web Application
+Move the downloaded file directly into your `open_ended/` folder.
+* **If you trained locally**:
+The `.keras` file will already be saved in your directory once the final training cell finishes.
 
-Launch the Streamlit app by running:
 
-```bash
-python -m streamlit run app.py
-```
-*(or `streamlit run app.py`)*
+### Running the app
 
-Once started, open your browser at the displayed local URL (typically `http://localhost:8501`).
+Launch the local server:
 
-### How to use:
-1. Click **Browse files** and upload a chest X-ray image (`.jpg`, `.jpeg`, or `.png`).
-2. Verify the preview of the uploaded image.
-3. Click the **Predict** button.
-4. View the predicted class (**NORMAL** or **PNEUMONIA**), confidence percentage, and pneumonia risk probability.
 
----
+streamlit run app.py
 
-## ⚠️ Medical Disclaimer
+Open your browser to `http://localhost:8501`.
 
-> **This project is for educational and academic demonstration purposes only and is not a certified medical diagnostic system.** It should not be used as a substitute for professional medical advice, diagnosis, or treatment.
+1. Upload any chest X-ray (`.jpeg`, `.jpg`, or `.png`).
+2. Verify the scan preview.
+3. Hit **Predict** to view the diagnosis, calculated confidence, and risk score.
+
+
+### Disclaimer
+
+This software is developed strictly for coursework and academic demonstration. It has not been clinically validated, FDA/CE cleared, or audited for clinical decision-making. Always rely on a board-certified radiologist for medical diagnosis and patient management.
